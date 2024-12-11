@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Train Seat Booking</title>
+    <!-- Link to Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.0.24/dist/tailwind.min.css"></script>
+    <style>
+      /* Custom Styles for Seats */
+      .booked {
+        background-color: #f87171; /* Red for booked seats */
+        color: white;
+        border: 2px solid #b91c1c;
+      }
+      .available {
+        background-color: #34d399; /* Green for available seats */
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        border: 2px solid #059669;
+      }
+      .available:hover {
+        background-color: #2f9a76; /* Slightly darker green */
+        transform: scale(1.1);
+      }
+      .seat {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 5px;
+        cursor: pointer;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 14px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .seat:hover {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      }
+      .seat-container {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .row-label {
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        color: #1f2937;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .btn-booking {
+        background-color: #3b82f6;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+      .btn-booking:hover {
+        background-color: #2563eb;
+        transform: translateY(-3px);
+      }
+      .input-seat-count {
+        border: 1px solid #d1d5db;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 16px;
+        width: 100px;
+        text-align: center;
+        transition: border-color 0.3s ease, box-shadow 0.2s ease;
+      }
+      .input-seat-count:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+      }
+      .booking-result {
+        font-size: 18px;
+        color: #1f2937;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 text-gray-800">
+    <div class="container">
+      <h1 class="text-3xl font-semibold text-center mb-6 text-blue-600">
+        Train Seat Booking
+      </h1>
+
+      <!-- Input Section -->
+      <div class="text-center mb-6">
+        <input
+          type="number"
+          id="seatCount"
+          class="input-seat-count"
+          placeholder="Seats (1-7)"
+          min="1"
+          max="7"
+        />
+        <button id="bookSeatsButton" class="btn-booking ml-2">
+          Book Seats
+        </button>
+      </div>
+
+      <!-- Seat Layout -->
+      <div id="seatsLayout" class="space-y-4">
+        <!-- Rows will be dynamically added here -->
+      </div>
+
+      <!-- Booking Result -->
+      <div id="bookingResult" class="text-center booking-result mt-4"></div>
+    </div>
+
+    <script>
+      const rows = 12;
+      const seatsPerRow = [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3]; // Last row has 3 seats
+      let seatStatus = Array.from({ length: rows }, (_, rowIndex) => {
+        return Array.from({ length: seatsPerRow[rowIndex] }, () => 0); // 0: available, 1: booked
+      });
+
+      // Function to render the seat layout
+      function renderSeats() {
+        const layoutContainer = document.getElementById('seatsLayout');
+        layoutContainer.innerHTML = ''; // Clear previous layout
+
+        for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+          const rowContainer = document.createElement('div');
+          rowContainer.classList.add('text-center');
+
+          const rowLabel = document.createElement('span');
+          rowLabel.textContent = `Row ${rowIndex + 1}:`;
+          rowLabel.classList.add('row-label');
+          rowContainer.appendChild(rowLabel);
+
+          const rowDiv = document.createElement('div');
+          rowDiv.classList.add('seat-container');
+
+          for (
+            let seatIndex = 0;
+            seatIndex < seatsPerRow[rowIndex];
+            seatIndex++
+          ) {
+            const seatDiv = document.createElement('div');
+            seatDiv.classList.add('seat');
+            seatDiv.textContent = seatIndex + 1;
+
+            // If the seat is booked, apply the "booked" class, otherwise "available"
+            if (seatStatus[rowIndex][seatIndex] === 1) {
+              seatDiv.classList.add('booked');
+            } else {
+              seatDiv.classList.add('available');
+            }
+
+            seatDiv.onclick = () => selectSeat(rowIndex, seatIndex);
+            rowDiv.appendChild(seatDiv);
+          }
+          rowContainer.appendChild(rowDiv);
+          layoutContainer.appendChild(rowContainer);
+        }
+      }
+
+      // Function to select a seat
+      function selectSeat(rowIndex, seatIndex) {
+        if (seatStatus[rowIndex][seatIndex] === 0) {
+          // If the seat is available
+          seatStatus[rowIndex][seatIndex] = 1; // Book the seat
+          renderSeats(); // Re-render the seat layout
+        }
+      }
+
+      // Function to book seats based on the number entered
+      function bookSeats() {
+        const seatCount = parseInt(document.getElementById('seatCount').value);
+        if (isNaN(seatCount) || seatCount < 1 || seatCount > 7) {
+          alert('Please enter a number between 1 and 7.');
+          return;
+        }
+
+        let bookedSeats = [];
+        let seatsToBook = seatCount;
+
+        // Try to book seats row by row
+        for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+          if (seatsToBook === 0) break;
+
+          const availableSeats = [];
+          for (
+            let seatIndex = 0;
+            seatIndex < seatsPerRow[rowIndex];
+            seatIndex++
+          ) {
+            if (seatStatus[rowIndex][seatIndex] === 0) {
+              availableSeats.push(seatIndex);
+            }
+          }
+
+          // If we have enough available seats in this row, book them
+          if (availableSeats.length >= seatsToBook) {
+            for (let i = 0; i < seatsToBook; i++) {
+              const seatIndex = availableSeats[i];
+              seatStatus[rowIndex][seatIndex] = 1;
+              bookedSeats.push(`Row ${rowIndex + 1}, Seat ${seatIndex + 1}`);
+            }
+            seatsToBook = 0; // All seats booked
+          } else if (availableSeats.length > 0) {
+            // Book all available seats in this row if not enough for the requested number
+            for (let i = 0; i < availableSeats.length; i++) {
+              const seatIndex = availableSeats[i];
+              seatStatus[rowIndex][seatIndex] = 1;
+              bookedSeats.push(`Row ${rowIndex + 1}, Seat ${seatIndex + 1}`);
+            }
+            seatsToBook -= availableSeats.length; // Decrease remaining seats to be booked
+          }
+        }
+
+        // Show booking result
+        if (seatsToBook === 0) {
+          document.getElementById(
+            'bookingResult'
+          ).textContent = `Successfully booked: ${bookedSeats.join(', ')}`;
+        } else {
+          document.getElementById('bookingResult').textContent =
+            'Could not book all requested seats. Please try again with fewer seats.';
+        }
+
+        renderSeats(); // Re-render the seat layout after booking
+      }
+
+      // Event listener for the booking button
+      document
+        .getElementById('bookSeatsButton')
+        .addEventListener('click', bookSeats);
+
+      // Initial render of seats layout
+      renderSeats();
+    </script>
+  </body>
+</html>
